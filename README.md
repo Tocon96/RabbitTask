@@ -1,6 +1,6 @@
 # RabbitMQTask
 
-App requires smtpconfiguration.json file to work correctly. The file should be located in the main directory of the project and consist of following fields:
+App requires smtpconfiguration.json file to work correctly. The file should be located in the main directory of the project (same as Program.cs and Startup.cs) and consist of following fields:
 
 {<br />
 &nbsp;&nbsp;"Host": "",<br />
