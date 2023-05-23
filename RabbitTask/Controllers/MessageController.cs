@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RabbitTask.Models;
 using RabbitTask.Services;
+using RabbitTask.Utils;
+using System.ComponentModel.DataAnnotations;
 
 namespace RabbitTask.Controllers
 {
@@ -10,11 +12,13 @@ namespace RabbitTask.Controllers
     {
         private readonly IMessageQueueProducer queueProducer;
         private readonly ILogger<MessageController> messageControllerLogger;
+        private ISenderTypeValidator validator;
 
-        public MessageController(IMessageQueueProducer producer, ILogger<MessageController> logger)
+        public MessageController(IMessageQueueProducer producer, ILogger<MessageController> logger, ISenderTypeValidator validator)
         {
             queueProducer = producer;
             messageControllerLogger = logger;
+            this.validator = validator;
         }
        
         [HttpPost("send")]
@@ -22,7 +26,12 @@ namespace RabbitTask.Controllers
         {
             try
             {
-                queueProducer.SendQueueMessage(message);
+
+                if (message == null || !validator.IsValid(message.Type))
+                {
+                    return StatusCode(StatusCodes.Status400BadRequest);
+                }
+                var messageCount = queueProducer.SendQueueMessage(message);
                 return Ok();
             }
             catch(Exception ex)

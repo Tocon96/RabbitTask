@@ -2,11 +2,13 @@ using Microsoft.Extensions.Logging;
 using RabbitTask.Controllers;
 using RabbitTask.Models;
 using RabbitTask.Services;
+using RabbitTask.Utils;
 using System.Net.Mail;
+using ILogger = RabbitTask.Services.ILogger;
 
-namespace RabbitTask.Tests
+namespace RabbitTask.Tests.IntegrationTests.Services
 {
-    public class Tests
+    public class MessageQueueProducerTests
     {
         [SetUp]
         public void Setup()
@@ -16,7 +18,9 @@ namespace RabbitTask.Tests
         [Test]
         public void TestSendMessage()
         {
-            MessageQueueProducer producer = new MessageQueueProducer();
+            ILogger logger = new Logger();
+
+            IMessageQueueProducer producer = new MessageQueueProducer(logger, "testmail");
 
             EmailMessage message = new EmailMessage
             {
@@ -24,16 +28,15 @@ namespace RabbitTask.Tests
                 From = "testfrom@mail.test",
                 To = "testto@mail.test",
                 Subject = "TestSubject",
-                Body = "TestBody"
+                Body = "TestBody",
+                Type = SenderTypeEnum.Smtp
             };
 
             uint queueCountAfterSendingMessage = producer.SendQueueMessage(message);
 
             Assert.That(queueCountAfterSendingMessage, Is.EqualTo(1));
 
-            uint queueCountAfterPurge = producer.PurgeQueue();
-
-            Assert.That(queueCountAfterPurge, Is.EqualTo(0));
+            producer.DeleteQueue();
         }
     }
 }

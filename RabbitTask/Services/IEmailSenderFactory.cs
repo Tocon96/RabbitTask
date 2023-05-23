@@ -1,7 +1,9 @@
-﻿namespace RabbitTask.Services
+﻿using RabbitTask.Models;
+
+namespace RabbitTask.Services
 {
     public interface IEmailSenderFactory
     {
-        public IEmailSender GetEmailSender(string type, ILogger<IEmailSender> queueLogger);
+        public IEmailSender GetEmailSender(SenderTypeEnum type);
     }
 }

@@ -1,15 +1,24 @@
-﻿namespace RabbitTask.Services
+﻿using RabbitTask.Models;
+
+namespace RabbitTask.Services
 {
     public class EmailSenderFactory : IEmailSenderFactory
     {
-        public IEmailSender GetEmailSender(string type, ILogger<IEmailSender> queueLogger)
+        private ILogger logger;
+
+        public EmailSenderFactory(ILogger logger) 
+        { 
+            this.logger = logger;
+        }
+
+        public IEmailSender GetEmailSender(SenderTypeEnum type)
         {
             switch(type)
             {
-                case "smtp":
-                    return new SmtpSender(queueLogger);
+                case SenderTypeEnum.Smtp:
+                    return new SmtpSender(this.logger);
                 default:
-                    return new SmtpSender(queueLogger);
+                    return new SmtpSender(this.logger);
             }
         }
     }

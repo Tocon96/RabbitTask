@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitTask.Models;
+using RabbitTask.Utils;
 using System;
 using System.Net;
 using System.Net.Mail;
@@ -12,14 +13,20 @@ namespace RabbitTask.Services
 {
     public class MessageQueueConsumer : IMessageQueueConsumer
     {
-        private readonly ILogger<MessageQueueConsumer> consumerLogger;
-        private readonly ILogger<IEmailSender> senderLogger;
+        private ILogger logger;
+        private IEmailSenderFactory emailSenderFactory;
+        private IMessageDeserializer deserializer;
+        private string queueName = "mail";
 
-        public MessageQueueConsumer(ILogger<MessageQueueConsumer> logger)
+        public MessageQueueConsumer(ILogger logger, IEmailSenderFactory emailSenderFactory, IMessageDeserializer deserializer, string queueName = "")
         {
-            consumerLogger = logger;
-            LoggerFactory factory = new LoggerFactory();
-            senderLogger = factory.CreateLogger<IEmailSender>();
+            this.logger = logger;
+            this.emailSenderFactory = emailSenderFactory;
+            this.deserializer = deserializer;
+            if(!String.IsNullOrEmpty(queueName)) 
+            {
+                this.queueName = queueName;
+            }
         }
 
         public void Register()
@@ -34,47 +41,28 @@ namespace RabbitTask.Services
                 var connection = factory.CreateConnection();
 
                 var channel = connection.CreateModel();
-                channel.QueueDeclare("mail", exclusive: false);
+                channel.QueueDeclare(queueName, exclusive: false);
 
                 var consumer = new EventingBasicConsumer(channel);
 
                 consumer.Received += (model, eventArgs) => {
-
                     var body = eventArgs.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
-
-                    EmailMessage emailMessage = DeserializeMessageJson(message);
-                    EmailSenderFactory emailSenderFactory = new EmailSenderFactory();
-
-                    IEmailSender sender = emailSenderFactory.GetEmailSender(emailMessage.Type, senderLogger);
+                    
+                    EmailMessage emailMessage = deserializer.DeserializeMessageJson(message);
+                    IEmailSender sender = emailSenderFactory.GetEmailSender(emailMessage.Type);
 
                     sender.Send(emailMessage);
+                    
                 };
 
-                channel.BasicConsume(queue: "mail", autoAck: true, consumer: consumer);
+                channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
             }
             catch (Exception ex)
             {
-                consumerLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 throw;
             }
         }
-
-        private EmailMessage DeserializeMessageJson(string json)
-        {
-            try
-            {
-                JsonSerializer serializer = new JsonSerializer();
-                EmailMessage deserialized = serializer.Deserialize<EmailMessage>(new JsonTextReader(new StringReader(json)));
-                return deserialized;
-            }
-            catch(Exception ex) 
-            {
-                consumerLogger.LogError(ex.Message);
-                throw;
-            }
-        }
-
-       
     }
 }

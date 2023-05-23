@@ -8,9 +8,10 @@ namespace RabbitTask.Services
 
     public class SmtpSender : IEmailSender
     {
-        private ILogger<IEmailSender> senderLogger { get; set; }
-        public SmtpSender(ILogger<IEmailSender> logger) {
-            senderLogger = logger;
+        private ILogger logger { get; set; }
+        public SmtpSender(ILogger logger) 
+        {
+            this.logger = logger;
         }
         public bool Send(EmailMessage message)
         {
@@ -26,7 +27,7 @@ namespace RabbitTask.Services
             }
             catch (Exception ex)
             {
-                senderLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 return false;
             }
 
@@ -48,7 +49,7 @@ namespace RabbitTask.Services
             }
             catch (Exception ex)
             {
-                senderLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 throw;
             }
         }
@@ -68,7 +69,7 @@ namespace RabbitTask.Services
             }
             catch (Exception ex)
             {
-                senderLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 throw;
             }
         }
@@ -85,7 +86,7 @@ namespace RabbitTask.Services
             }
             catch (Exception ex)
             {
-                senderLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 throw;
             }
         }

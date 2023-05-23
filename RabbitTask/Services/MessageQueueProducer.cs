@@ -1,18 +1,22 @@
 ﻿using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitTask.Controllers;
+using RabbitTask.Models;
+using RabbitTask.Utils;
 using System.Text;
 
 namespace RabbitTask.Services
 {
     public class MessageQueueProducer : IMessageQueueProducer
     {
-        private IModel channelModel { get; set; }
+        private IModel channelModel;
+        private ILogger logger;
+        private string queueName = "mail";
 
-        private readonly ILogger<MessageQueueProducer> producerLogger;
-
-        public MessageQueueProducer() 
+        public MessageQueueProducer(ILogger logger, string queueName = "") 
         {
+            this.logger = logger;
+
             var factory = new ConnectionFactory
             {
                 HostName = "localhost"
@@ -23,38 +27,39 @@ namespace RabbitTask.Services
 
             channelModel = channel;
 
-            LoggerFactory loggerFactory = new LoggerFactory();
-            producerLogger = loggerFactory.CreateLogger<MessageQueueProducer>();
+            if (!String.IsNullOrEmpty(queueName))
+            {
+                this.queueName = queueName;
+            }
         }
-        public uint SendQueueMessage<T>(T message)
+        public uint SendQueueMessage(EmailMessage message)
         {
             try
             {
-                channelModel.QueueDeclare("mail", exclusive: false);
+                channelModel.QueueDeclare(queueName, exclusive: false);
 
                 var json = JsonConvert.SerializeObject(message);
                 var body = Encoding.UTF8.GetBytes(json);
 
-                channelModel.BasicPublish(exchange: "", routingKey: "mail", body: body);
-                return channelModel.MessageCount("mail");
+                channelModel.BasicPublish(exchange: "", routingKey: queueName, body: body);
+                return channelModel.MessageCount(queueName);
             }
             catch (Exception ex)
             {
-                producerLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 throw;
             }
         }
 
-        public uint PurgeQueue()
+        public void DeleteQueue()
         {
             try
             {
-                channelModel.QueuePurge("mail");
-                return channelModel.MessageCount("mail");
+                channelModel.QueueDelete(queueName);
             }
             catch (Exception ex)
             {
-                producerLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 throw;
             }
         }
