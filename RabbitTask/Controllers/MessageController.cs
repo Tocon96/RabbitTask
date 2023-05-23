@@ -22,7 +22,7 @@ namespace RabbitTask.Controllers
         {
             try
             {
-                queueProducer.SendQueueMessage(message, messageControllerLogger);
+                queueProducer.SendQueueMessage(message);
                 return Ok();
             }
             catch(Exception ex)

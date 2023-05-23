@@ -8,7 +8,8 @@ namespace RabbitTask.Services
     public class MessageQueueProducer : IMessageQueueProducer
     {
         private IModel channelModel { get; set; }
-        private IConnection connectionRabbit { get; set; }
+
+        private readonly ILogger<MessageQueueProducer> producerLogger;
 
         public MessageQueueProducer() 
         {
@@ -21,10 +22,11 @@ namespace RabbitTask.Services
             var channel = connection.CreateModel();
 
             channelModel = channel;
-            connectionRabbit = connection;
-        
+
+            LoggerFactory loggerFactory = new LoggerFactory();
+            producerLogger = loggerFactory.CreateLogger<MessageQueueProducer>();
         }
-        public uint SendQueueMessage<T>(T message, ILogger<MessageController> logger)
+        public uint SendQueueMessage<T>(T message)
         {
             try
             {
@@ -38,12 +40,12 @@ namespace RabbitTask.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                producerLogger.LogError(ex.Message);
                 throw;
             }
         }
 
-        public uint PurgeQueue(ILogger<MessageController> logger)
+        public uint PurgeQueue()
         {
             try
             {
@@ -52,7 +54,7 @@ namespace RabbitTask.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                producerLogger.LogError(ex.Message);
                 throw;
             }
         }
