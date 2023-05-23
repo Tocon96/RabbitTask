@@ -18,8 +18,6 @@ namespace RabbitTask.Tests
 
             MessageQueueProducer producer = new MessageQueueProducer();
 
-            IModel channel = producer.Channel;
-
             EmailMessage message = new EmailMessage
             {
                 Id = 0,
@@ -33,7 +31,7 @@ namespace RabbitTask.Tests
 
             Assert.AreEqual(1, queueCountAfterSendingMessage);
 
-            uint queueCountAfterPurge = producer.PurgeQueue(channel, controllerLogger);
+            uint queueCountAfterPurge = producer.PurgeQueue(controllerLogger);
 
             Assert.AreEqual(0, queueCountAfterPurge);
         }

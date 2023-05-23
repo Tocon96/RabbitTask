@@ -7,8 +7,8 @@ namespace RabbitTask.Services
 {
     public class MessageQueueProducer : IMessageQueueProducer
     {
-        public IModel Channel { get; set; }
-        public IConnection Connection { get; set; }
+        private IModel channelModel { get; set; }
+        private IConnection connectionRabbit { get; set; }
 
         public MessageQueueProducer() 
         {
@@ -20,21 +20,21 @@ namespace RabbitTask.Services
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
 
-            Channel = channel;
-            Connection = connection;
+            channelModel = channel;
+            connectionRabbit = connection;
         
         }
         public uint SendQueueMessage<T>(T message, ILogger<MessageController> logger)
         {
             try
             {
-                Channel.QueueDeclare("mail", exclusive: false);
+                channelModel.QueueDeclare("mail", exclusive: false);
 
                 var json = JsonConvert.SerializeObject(message);
                 var body = Encoding.UTF8.GetBytes(json);
 
-                Channel.BasicPublish(exchange: "", routingKey: "mail", body: body);
-                return Channel.MessageCount("mail");
+                channelModel.BasicPublish(exchange: "", routingKey: "mail", body: body);
+                return channelModel.MessageCount("mail");
             }
             catch (Exception ex)
             {
@@ -43,12 +43,12 @@ namespace RabbitTask.Services
             }
         }
 
-        public uint PurgeQueue(IModel channel, ILogger<MessageController> logger)
+        public uint PurgeQueue(ILogger<MessageController> logger)
         {
             try
             {
-                channel.QueuePurge("mail");
-                return channel.MessageCount("mail");
+                channelModel.QueuePurge("mail");
+                return channelModel.MessageCount("mail");
             }
             catch (Exception ex)
             {
