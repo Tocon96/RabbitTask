@@ -11,13 +11,13 @@ namespace RabbitTask.Controllers
     public class MessageController : ControllerBase
     {
         private readonly IMessageQueueProducer queueProducer;
-        private readonly ILogger<MessageController> messageControllerLogger;
+        private readonly Services.ILogger logger;
         private ISenderTypeValidator validator;
 
-        public MessageController(IMessageQueueProducer producer, ILogger<MessageController> logger, ISenderTypeValidator validator)
+        public MessageController(IMessageQueueProducer producer, Services.ILogger logger, ISenderTypeValidator validator)
         {
             queueProducer = producer;
-            messageControllerLogger = logger;
+            this.logger = logger;
             this.validator = validator;
         }
        
@@ -36,7 +36,7 @@ namespace RabbitTask.Controllers
             }
             catch(Exception ex)
             {
-                messageControllerLogger.LogError(ex.Message);
+                logger.Error(ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
